@@ -1,0 +1,23 @@
+func putch ch
+	addr ch
+	asm mov si, ax
+	asm mov bx, [si]
+	asm mov ah, 0x0E
+	asm mov al, bl
+	asm int 0x10
+endf
+
+func exit
+	asm mov ah, 0x4C
+	asm int 0x21
+endf
+
+func add n1 n2
+	addr n1
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n2
+	asm mov si, ax
+	asm mov ax, [si]
+	asm add ax, bx
+endf

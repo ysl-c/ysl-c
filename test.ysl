@@ -1,0 +1,15 @@
+%include std.ysl
+
+int num1
+int num2
+int sum
+
+putch 65
+
+set num1 32
+set num2 33
+add $num1 $num2
+to sum
+
+putch $sum
+exit
