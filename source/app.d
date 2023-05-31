@@ -21,8 +21,13 @@ void main(string[] args) {
 		writefln("Options:");
 		writefln("    -h / --help : Show this info");
 		writefln("    -o / --out  : Choose output file");
+		writefln("    --org       : Sets org address in asm file");
 		return;
 	}
+
+	auto x86Target     = new Compiler_x86_16();
+	x86Target.org      = "0x100";
+	x86Target.comments = false;
 
 	for (size_t i = 1; i < args.length; ++ i) {
 		if (args[i][0] == '-') {
@@ -32,6 +37,11 @@ void main(string[] args) {
 					++ i;
 
 					outFile = args[i];
+					break;
+				}
+				case "--org": {
+					++ i;
+					x86Target.org = args[i];
 					break;
 				}
 				default: {
@@ -45,8 +55,13 @@ void main(string[] args) {
 		}
 	}
 
-	target = new Compiler_x86_16();
+	target = x86Target;
 	auto res = compiler.Compile(target, inFile);
+
+	if (!target.success) {
+		writeln("Compilation failed");
+		return;
+	}
 
 	string assembly;
 
@@ -58,8 +73,4 @@ void main(string[] args) {
 	}
 
 	std.file.write(outFile, assembly);
-
-	foreach (ref var ; target.variables) {
-		writeln(var);
-	}
 }

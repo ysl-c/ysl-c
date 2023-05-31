@@ -10,8 +10,9 @@ import yslc.error;
 import yslc.split;
 
 class Compiler_x86_16 : CompilerTargetModule {
-	bool   success = true;
 	string lastFunction;
+	string org;
+	bool   comments = true;
 
 	string[] CompileFunctionCall(CodeLine line, string[] parts) {
 		string[] ret;
@@ -36,16 +37,15 @@ class Compiler_x86_16 : CompilerTargetModule {
 		}
 
 		for (size_t i = 1; i < parts.length; ++ i) {
-			auto param = Variable(
-				func.parameters[i - 1].name,
-				func.parameters[i - 1].address,
-				2
+			auto   param     = func.parameters[i - 1].name;
+			string paramName = format(
+				"__function_%s.__param_%s", func.name, param
 			);
 		
 			if (parts[i].isNumeric()) {
 				ret ~= [
 					format(
-						"mov word [%d], %d", param.address, parse!int(parts[i])
+						"mov word [%s], %d", paramName, parse!int(parts[i])
 					)
 				];
 			}
@@ -53,12 +53,9 @@ class Compiler_x86_16 : CompilerTargetModule {
 				switch (parts[i][0]) {
 					case '$': {
 						string   varName = parts[i][1 .. $];
-						Variable var;
+						Variable* var = GetVariable(varName);
 						
-						try {
-							var = GetVariable(varName);
-						}
-						catch (CompilerException) {
+						if (var is null) {
 							ErrorUnknownVariable(
 								line.file, line.line, varName
 							);
@@ -68,10 +65,10 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 						ret ~= [
 							format(
-								"mov bx, [%d]", var.address
+								"mov bx, [.__var_%s]", var.name
 							),
 							format(
-								"mov word [%d], bx", param.address
+								"mov word [%s], bx", paramName
 							)
 						];
 						break;
@@ -88,18 +85,8 @@ class Compiler_x86_16 : CompilerTargetModule {
 		return ret;
 	}
 
-	string[] CompileFunctionStart(string[] parts) {
-		Function func;
-
-		lastFunction = parts[0];
-		func.name    = parts[0];
-
-		AddScope();
-
-		foreach (ref param ; parts[1 .. $]) {
-			variableTop += 2;
-			
-		}
+	string[] CompileFunctionStart(CodeLine line, string[] parts) {
+		AddFunction(parts[0], parts[1 .. $]);
 	
 		return [
 			format("jmp __function_%s_end", parts[0]),
@@ -107,13 +94,55 @@ class Compiler_x86_16 : CompilerTargetModule {
 		];
 	}
 
-	string[] CompileFunctionEnd() {
-		DestroyScope();
-	
-		return [
-			"ret",
-			format("__function_%s_end:", lastFunction)
+	string[] CompileFunctionEnd(CodeLine line) {
+		string[] ret = [
+			"ret"
 		];
+
+		foreach (ref var ; localVariables) {
+			switch (var.type) {
+				case VariableType.Integer: {
+					ret ~= format(
+						".__var_%s: dw 0",
+						var.name
+					);
+					break;
+				}
+				case VariableType.Array: {
+					ret ~= format(
+						".__var_%s: times %d dw 0",
+						var.name, var.elements
+					);
+					break;
+				}
+				case VariableType.String: {
+					string dbString;
+
+					foreach (ref ch ; var.value) {
+						dbString ~= format("%d,", cast(int) ch);
+					}
+
+					ret ~= format(
+						".__var_%s: db %s 0",
+						var.name, dbString
+					);
+					break;
+				}
+				default: assert(0);
+			}
+		}
+
+		localVariables = [];
+
+		auto func = functions[$ - 1];
+
+		foreach (ref param ; func.parameters) {
+			ret ~= format(".__param_%s: dw 0", param.name);
+		}
+
+		ret ~= format("__function_%s_end:", func.name);
+
+		return ret;
 	}
 
 	string[] CompileReturn() {
@@ -122,41 +151,148 @@ class Compiler_x86_16 : CompilerTargetModule {
 		];
 	}
 
-	string[] CompileSet(string[] parts) {
-		size_t addr = GetVariable(parts[0]).address;
+	string[] CompileSet(CodeLine line, string[] parts) {
+		auto var = GetVariable(parts[0]);
+
+		if (var is null) {
+			ErrorUnknownVariable(line.file, line.line, parts[0]);
+			success = false;
+			return [];
+		}
 
 		return [
 			format("mov bx, %d", parse!int(parts[1])),
-			format("mov [%d], bx", addr)
+			format("mov [.__var_%s], bx", var.name)
 		];
 	}
 
-	string[] CompileTo(string[] parts) {
-		size_t addr = GetVariable(parts[0]).address;
+	string[] CompileTo(CodeLine line, string[] parts) {
+		auto var = GetVariable(parts[0]);
+
+		if (var is null) {
+			ErrorUnknownVariable(line.file, line.line, parts[0]);
+			success = false;
+			return [];
+		}
 
 		return [
-			format("mov [%d], ax", addr)
+			format("mov [.__var_%s], ax", var.name)
 		];
 	}
 
-	string[] CompileAddr(string[] parts) {
-		size_t addr = GetVariable(parts[0]).address;
+	string[] CompileAddr(CodeLine line, string[] parts) {
+		auto var = GetVariable(parts[0]);
+
+		if (var is null) {
+			ErrorUnknownVariable(line.file, line.line, parts[0]);
+			success = false;
+			return [];
+		}
 
 		return [
-			format("mov ax, %d", addr)
+			format("mov ax, .__var_%s", var.name)
 		];
+	}
+
+	string[] CompileParam(CodeLine line, string[] parts) {
+		Variable var;
+
+		if (parts.length != 1) {
+			ErrorWrongParameterNum(
+				line.file, line.line, 1, parts.length
+			);
+			success = false;
+			return [];
+		}
+
+		var.name = parts[0];
+		var.type = VariableType.Integer;
+
+		localVariables ~= var;
+
+		return [
+			format(
+				"mov bx, [.__param_%s]",
+				parts[0]
+			),
+			format(
+				"mov [.__var_%s], bx",
+				var.name
+			)
+		];
+	}
+
+	Variable CreateInt(CodeLine line, string[] parts) {
+		Variable var;
+		
+		if (parts.length != 1) {
+			ErrorWrongParameterNum(
+				line.file, line.line, 1, parts.length
+			);
+			success = false;
+			return var;
+		}
+	
+		var.name = parts[0];
+		var.type = VariableType.Integer;
+
+		return var;
+	}
+
+	Variable CreateArray(CodeLine line, string[] parts) {
+		Variable var;
+		
+		if (parts.length != 2) {
+			ErrorWrongParameterNum(
+				line.file, line.line, 2, parts.length
+			);
+			success = false;
+			return var;
+		}
+		
+		var.name     = parts[1];
+		var.type     = VariableType.Array;
+		var.elements = parse!ulong(parts[0]);
+
+		return var;
+	}
+
+	Variable CreateString(CodeLine line, string[] parts) {
+		Variable var;
+	
+		if (parts.length != 2) {
+			ErrorWrongParameterNum(
+				line.file, line.line, 2, parts.length
+			);
+
+			success = false;
+			return var;
+		}
+
+		var.name  = parts[0];
+		var.type  = VariableType.String;
+		var.value = parts[1];
+
+		return var;
 	}
 	
 	override string[] Compile(CodeLine[] lines) {
 		string[] ret;
-		variableTop = 4096;
 
-		AddScope(); // i hope this doesn't cause a terrible error in the future
+		success = true;
+
+		ret ~= [
+			format("org %s", org),
+			"mov si, cs",
+			"mov ds, si"
+		];
 
 		foreach (ref line ; lines) {
-			ret ~= format("; %s", line.contents);
+			if (comments) {
+				ret ~= format("; %s", line.contents);
+			}
 		
-			auto parts   = Split(
+			auto parts = Split(
 				line.file, line.line, line.contents,
 				&success
 			);
@@ -177,49 +313,65 @@ class Compiler_x86_16 : CompilerTargetModule {
 					break;
 				}
 				case "func": {
-					ret ~= CompileFunctionStart(parts[1 .. $]);
+					ret ~= CompileFunctionStart(line, parts[1 .. $]);
 					break;
 				}
 				case "endf": {
-					ret ~= CompileFunctionEnd();
+					ret ~= CompileFunctionEnd(line);
 					break;
 				}
 				case "return": {
 					ret ~= CompileReturn();
 					break;
 				}
-				case "int": { // TODO: write safe code
-					AllocateGlobal(parts[1], 2);
+				case "int": {
+					globalVariables  ~= CreateInt(line, parts[1 .. $]);
 					break;
 				}
 				case "array": {
-					AllocateGlobal(parts[1], parse!size_t(parts[2]));
+					globalVariables  ~= CreateArray(line, parts[1 .. $]);
+					break;
+				}
+				case "string": {
+					globalVariables ~= CreateString(line, parts[1 .. $]);
 					break;
 				}
 				case "local": {
 					switch (parts[1]) {
 						case "int": {
-							AllocateLocal(parts[2], 2);
+							localVariables ~= CreateInt(line, parts[2 .. $]);
 							break;
 						}
 						case "array": {
-							AllocateLocal(parts[2], parse!size_t(parts[3]));
+							localVariables ~= CreateArray(line, parts[2 .. $]);
 							break;
 						}
-						default: assert(0);
+						case "string": {
+							localVariables ~= CreateString(line, parts[2 .. $]);
+							break;
+						}
+						default: {
+							ErrorUnknownType(line.file, line.line, parts[1]);
+							success = false;
+							break;
+						}
 					}
 					break;
 				}
 				case "set": {
-					ret ~= CompileSet(parts[1 .. $]);
+					ret ~= CompileSet(line, parts[1 .. $]);
 					break;
 				}
 				case "to": {
-					ret ~= CompileTo(parts[1 .. $]);
+					ret ~= CompileTo(line, parts[1 .. $]);
 					break;
 				}
 				case "addr": {
-					ret ~= CompileAddr(parts[1 .. $]);
+					ret ~= CompileAddr(line, parts[1 .. $]);
+					break;
+				}
+				case "param": {
+					ret ~= CompileParam(line, parts[1 .. $]);
 					break;
 				}
 				default: {
@@ -229,8 +381,37 @@ class Compiler_x86_16 : CompilerTargetModule {
 			}
 		}
 
-		if (!success) {
-			exit(1);
+		foreach (ref var ; globalVariables) {
+			switch (var.type) {
+				case VariableType.Integer: {
+					ret ~= format(
+						"__gvar_%s: dw 0",
+						var.name
+					);
+					break;
+				}
+				case VariableType.Array: {
+					ret ~= format(
+						"__gvar_%s: times %d dw 0",
+						var.name, var.elements
+					);
+					break;
+				}
+				case VariableType.String: {
+					string dbString;
+
+					foreach (ref ch ; var.value) {
+						dbString ~= format("%d,", cast(int) ch);
+					}
+
+					ret ~= format(
+						"__gvar_%s: db %s 0",
+						var.name, dbString
+					);
+					break;
+				}
+				default: assert(0);
+			}
 		}
 
 		return ret;

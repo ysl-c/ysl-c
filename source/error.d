@@ -40,3 +40,8 @@ void ErrorWrongParameterNum(string fname, size_t line, size_t expected, size_t g
 	ErrorBegin(fname, line);
 	stderr.writefln("Wrong amount of parameters, expected %d, got %d", expected, got);
 }
+
+void ErrorUnknownType(string fname, size_t line, string name) {
+	ErrorBegin(fname, line);
+	stderr.writefln("Unknown type: '%s'", name);
+}

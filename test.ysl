@@ -1,15 +1,18 @@
-%include std.ysl
+%include "std.ysl"
 
-int num1
-int num2
-int sum
+func main
+	local int num1
+	local int num2
+	local int sum
 
-putch 65
+	putch 65
 
-set num1 32
-set num2 33
-add $num1 $num2
-to sum
+	set num1 32
+	set num2 33
+	add $num1 $num2
+	to sum
 
-putch $sum
-exit
+	putch $sum
+	exit
+endf
+main

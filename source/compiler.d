@@ -1,5 +1,6 @@
 module yslc.compiler;
 
+import std.stdio;
 import std.algorithm;
 import yslc.preprocessor;
 
@@ -15,15 +16,21 @@ class CompilerException : Exception {
 	}
 }
 
+enum VariableType {
+	Integer,
+	Array,
+	String
+}
+
 struct Variable {
-	string name;
-	ulong  address;
-	ulong  size;
+	string       name;
+	VariableType type;
+	ulong        elements;
+	string       value;
 }
 
 struct FunctionParameter {
 	string name;
-	ulong  address;
 }
 
 struct Function {
@@ -32,62 +39,29 @@ struct Function {
 }
 
 class CompilerTargetModule {
-	Variable[] variables;
-	Function[] functions;
-	size_t     variableTop;
-	string[][] scopes;
+	bool               success;
+	Variable[]         globalVariables;
+	Variable[]         localVariables;
+	Function[]         functions;
 
-	Variable AllocateGlobal(string name, size_t size) {
-		variables ~= Variable(
-			name, variableTop, size
-		);
-		
-		variableTop += size;
-
-		return variables[$ - 1];
-	}
-
-	Variable AllocateLocal(string name, size_t size) {
-		auto ret = AllocateGlobal(name, size);
-		
-		scopes[$ - 1] ~= name;
-
-		return ret;
-	}
-
-	void DestroyScope() {
-		foreach (ref var ; scopes[$ - 1]) {
-			variableTop -= GetVariable(var).size;
-			RemoveVariable(var);
-		}
-		scopes = scopes[0 .. $ - 1];
-	}
-
-	void AddScope() {
-		scopes ~= cast(string[]) [];
-	}
-
-	Variable GetVariable(string name) {
-		foreach_reverse (ref var ; variables) {
+	Variable* GetVariable(string name) {
+		foreach (ref var ; localVariables) {
 			if (var.name == name) {
-				return var;
+				return &var;
 			}
 		}
 
-		throw new CompilerException("no such variable");
+		return null;
 	}
-
-	void RemoveVariable(string name) {
-		foreach_reverse (i, ref var ; variables) {
-			if (var.name == name) {
-				variables = variables.remove(i);
-				return;
-			}
-		}
-	}
-
+	
 	void AddFunction(string name, string[] parameters) {
-		functions ~= Function(name, parameters);
+		FunctionParameter[] params;
+
+		foreach (ref param ; parameters) {
+			params ~= FunctionParameter(param);
+		}
+		
+		functions ~= Function(name, params);
 	}
 
 	Function GetFunction(string name) {
