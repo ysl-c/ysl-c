@@ -44,8 +44,18 @@ class CompilerTargetModule {
 	Variable[]         localVariables;
 	Function[]         functions;
 
-	Variable* GetVariable(string name) {
+	Variable* GetLocal(string name) {
 		foreach (ref var ; localVariables) {
+			if (var.name == name) {
+				return &var;
+			}
+		}
+
+		return null;
+	}
+
+	Variable* GetGlobal(string name) {
+		foreach (ref var ; globalVariables) {
 			if (var.name == name) {
 				return &var;
 			}

@@ -4,6 +4,7 @@ import std.uni;
 import std.file;
 import std.path;
 import std.array;
+import std.string;
 import std.algorithm;
 import core.stdc.stdlib;
 import yslc.compiler;
@@ -76,7 +77,10 @@ CodeLine[] RunPreprocessor(
 				}
 			}
 		}
-		else if (line[0] == '#') {
+		else if (line.strip().empty()) {
+			continue;
+		}
+		else if (line.strip()[0] == '#') {
 			// comment
 			continue;
 		}

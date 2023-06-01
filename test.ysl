@@ -1,17 +1,23 @@
 %include "std.ysl"
 
+int test
+
+func incrementTest
+	import test
+	add $test 1
+	to test
+	export test
+endf
+
 func main
-	local int num1
-	local int num2
-	local int sum
-
-	putch 65
-
-	set num1 32
-	set num2 33
-	add $num1 $num2
-	to sum
-
-	putch $sum
-	exit
+	import test
+	set test 65
+	export test
+	incrementTest
+	incrementTest
+	incrementTest
+	incrementTest
+	# E
+	import test
+	putch $test
 endf
