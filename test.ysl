@@ -15,4 +15,3 @@ func main
 	putch $sum
 	exit
 endf
-main

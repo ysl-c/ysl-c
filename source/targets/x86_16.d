@@ -284,7 +284,8 @@ class Compiler_x86_16 : CompilerTargetModule {
 		ret ~= [
 			format("org %s", org),
 			"mov si, cs",
-			"mov ds, si"
+			"mov ds, si",
+			"jmp __function_main"
 		];
 
 		foreach (ref line ; lines) {

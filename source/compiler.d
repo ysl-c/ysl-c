@@ -74,6 +74,16 @@ class CompilerTargetModule {
 		throw new CompilerException("no such function");
 	}
 
+	bool FunctionExists(string name) {
+		foreach (ref func ; functions) {
+			if (func.name == name) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	abstract string[] Compile(CodeLine[] lines);
 }
 
@@ -85,6 +95,11 @@ class Compiler {
 		auto     code = RunPreprocessor(file, includePaths, included);
 
 		auto ret = target.Compile(code);
+
+		if (!target.FunctionExists("main")) {
+			stderr.writefln("YSL-M requires that a main function is defined");
+			target.success = false;
+		}
 
 		foreach (ref line ; ret) {
 			if (line[$ - 1] != ':') {
