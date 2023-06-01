@@ -46,7 +46,17 @@ void ErrorUnknownType(string fname, size_t line, string name) {
 	stderr.writefln("Unknown type: '%s'", name);
 }
 
-void ErrorEmptyIf(string fname, size_t line) {
+void ErrorEmptyStatement(string fname, size_t line) {
 	ErrorBegin(fname, line);
-	stderr.writeln("Empty if statement");
+	stderr.writeln("Empty statement");
+}
+
+void ErrorExpectedInteger(string fname, size_t line) {
+	ErrorBegin(fname, line);
+	stderr.writefln("Expected integer");
+}
+
+void ErrorForWontRun(string fname, size_t line) {
+	ErrorBegin(fname, line);
+	stderr.writefln("This for loop won't run");
 }

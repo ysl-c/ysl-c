@@ -18,10 +18,10 @@ func add n1 n2
 	param n1
 	param n2
 
-	addr n1
+	addr n2
 	asm mov si, ax
 	asm mov bx, [si]
-	addr n2
+	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
 	asm add ax, bx
@@ -31,10 +31,10 @@ func sub n1 n2
 	param n1
 	param n2
 
-	addr n1
+	addr n2
 	asm mov si, ax
 	asm mov bx, [si]
-	addr n2
+	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
 	asm sub ax, bx
@@ -44,10 +44,10 @@ func mul n1 n2
 	param n1
 	param n2
 
-	addr n1
+	addr n2
 	asm mov si, ax
 	asm mov bx, [si]
-	addr n2
+	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
 	asm mul bx
@@ -57,10 +57,10 @@ func div n1 n2
 	param n1
 	param n2
 
-	addr n1
+	addr n2
 	asm mov si, ax
 	asm mov bx, [si]
-	addr n2
+	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
 	asm div bx
@@ -70,10 +70,10 @@ func mod n1 n2
 	param n1
 	param n2
 
-	addr n1
+	addr n2
 	asm mov si, ax
 	asm mov bx, [si]
-	addr n2
+	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
 	asm div bx
@@ -84,10 +84,10 @@ func equals n1 n2
 	param n1
 	param n2
 
-	addr n1
+	addr n2
 	asm mov si, ax
 	asm mov bx, [si]
-	addr n2
+	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
 	asm cmp ax, bx
@@ -95,6 +95,44 @@ func equals n1 n2
 	asm mov ax, 0
 	asm ret
 	asm .equals:
+	asm mov ax, 1
+	asm ret
+endf
+
+func less n1 n2
+	param n1
+	param n2
+
+	addr n2
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n1
+	asm mov si, ax
+	asm mov ax, [si]
+	asm cmp ax, bx
+	asm jl .less
+	asm mov ax, 0
+	asm ret
+	asm .less:
+	asm mov ax, 1
+	asm ret
+endf
+
+func greater n1 n2
+	param n1
+	param n2
+
+	addr n2
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n1
+	asm mov si, ax
+	asm mov ax, [si]
+	asm cmp ax, bx
+	asm jg .greater
+	asm mov ax, 0
+	asm ret
+	asm .greater:
 	asm mov ax, 1
 	asm ret
 endf

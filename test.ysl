@@ -1,25 +1,7 @@
 %include "std.ysl"
 
 func main
-	local int a
-	local int b
-	local int c
-	set a 5
-	set b 5
-	set c 7
-
-	if equals $a $b
+	for 5
 		putch 65
-		if equals $a $b
-			putch 66
-		endif
-	endif
-
-	if equals $a $c
-		putch 67
-
-		if equals $a $b
-			putch 68
-		endif
-	endif 
+	endfor
 endf

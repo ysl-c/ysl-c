@@ -156,11 +156,12 @@ class Compiler_x86_16 : CompilerTargetModule {
 		string[] ret;
 
 		if (parts.empty()) {
-			ErrorEmptyIf(line.file, line.line);
+			ErrorEmptyStatement(line.file, line.line);
 			success = false;
 			return [];
 		}
-		
+
+		ret ~= format(".__statement_%d:", statements);
 		ret ~= CompileFunctionCall(line, parts);
 		ret ~= [
 			"cmp ax, 0",
@@ -178,6 +179,63 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 		ret ~= [
 			format(".__statement_%d_end:", statementIDs[$ - 1])
+		];
+
+		statementIDs = statementIDs[0 .. $ - 1];
+		return ret;
+	}
+
+	string[] CompileWhile(CodeLine line, string[] parts) {
+		return CompileIf(line, parts);
+	}
+
+	string[] CompileEndWhile(CodeLine line) {
+		string[] ret;
+
+		ret ~= [
+			format("jmp .__statement_%d", statementIDs[$ - 1]),
+			format(".__statement_%d_end:", statementIDs[$ - 1])
+		];
+
+		statementIDs = statementIDs[0 .. $ - 1];
+		return ret;
+	}
+
+	string[] CompileFor(CodeLine line, string[] parts) {
+		if (parts.empty()) {
+			ErrorEmptyStatement(line.file, line.line);
+			success = false;
+			return [];
+		}
+
+		if (!parts[0].isNumeric()) {
+			ErrorExpectedInteger(line.file, line.line);
+			success = false;
+			return [];
+		}
+
+		int times = parse!int(parts[0]);
+
+		if (times == 0) {
+			ErrorForWontRun(line.file, line.line);
+			success = false;
+			return [];
+		}
+
+		statementIDs ~= statements;
+		++ statements;
+
+		return [
+			format("mov cx, %d", times),
+			format(".__statement_%d:", statementIDs[$ - 1])
+		];
+	}
+
+	string[] CompileEndFor(CodeLine line) {
+		string[] ret = [
+			"dec cx",
+			"cmp cx, 0",
+			format("jne .__statement_%d", statementIDs[$ - 1])
 		];
 
 		statementIDs = statementIDs[0 .. $ - 1];
@@ -424,6 +482,22 @@ class Compiler_x86_16 : CompilerTargetModule {
 				}
 				case "endif": {
 					ret ~= CompileEndIf(line);
+					break;
+				}
+				case "while": {
+					ret ~= CompileWhile(line, parts[1 .. $]);
+					break;
+				}
+				case "endwhile": {
+					ret ~= CompileEndWhile(line);
+					break;
+				}
+				case "for": {
+					ret ~= CompileFor(line, parts[1 .. $]);
+					break;
+				}
+				case "endfor": {
+					ret ~= CompileEndFor(line);
 					break;
 				}
 				case "return": {
