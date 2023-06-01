@@ -15,6 +15,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 	bool    comments = true;
 	ulong   statements;
 	ulong[] statementIDs;
+	bool    ifHadElse = false;
 
 	string[] CompileParameter(CodeLine line, string part, string to) {
 		if (part.isNumeric()) {
@@ -155,6 +156,8 @@ class Compiler_x86_16 : CompilerTargetModule {
 	string[] CompileIf(CodeLine line, string[] parts) {
 		string[] ret;
 
+		ifHadElse = false;
+
 		if (parts.empty()) {
 			ErrorEmptyStatement(line.file, line.line);
 			success = false;
@@ -165,7 +168,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 		ret ~= CompileFunctionCall(line, parts);
 		ret ~= [
 			"cmp ax, 0",
-			format("je .__statement_%d_end", statements)
+			format("je .__statement_%d_else", statements)
 		];
 
 		statementIDs ~= statements;
@@ -174,8 +177,23 @@ class Compiler_x86_16 : CompilerTargetModule {
 		return ret;
 	}
 
+	string[] CompileElse(CodeLine line) {
+		ifHadElse = true;
+		
+		return [
+			format("jmp .__statement_%d_end", statementIDs[$ - 1]),
+			format(".__statement_%d_else:", statementIDs[$ - 1])
+		];
+	}
+
 	string[] CompileEndIf(CodeLine line) {
 		string[] ret;
+
+		if (!ifHadElse) {
+			ret ~= [
+				format(".__statement_%d_else:", statementIDs[$ - 1])
+			];
+		}
 
 		ret ~= [
 			format(".__statement_%d_end:", statementIDs[$ - 1])
@@ -478,6 +496,10 @@ class Compiler_x86_16 : CompilerTargetModule {
 				}
 				case "if": {
 					ret ~= CompileIf(line, parts[1 .. $]);
+					break;
+				}
+				case "else": {
+					ret ~= CompileElse(line);
 					break;
 				}
 				case "endif": {
