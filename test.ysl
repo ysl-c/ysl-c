@@ -1,14 +1,6 @@
 %include "std.ysl"
 
 func main
-	local int a
-	local int b
-	local int c
-	set a 5
-	set b 5
-	set c 7
-
-	if equals $a $b
-		putch 65
-	endif
+	puthex 69
+	exit
 endf

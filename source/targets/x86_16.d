@@ -28,8 +28,8 @@ class Compiler_x86_16 : CompilerTargetModule {
 		else {
 			switch (part[0]) {
 				case '$': {
-					string   varName = part[1 .. $];
-					Variable* var = GetLocal(varName);
+					string    varName = part[1 .. $];
+					Variable* var     = GetLocal(varName);
 					
 					if (var is null) {
 						ErrorUnknownVariable(
@@ -46,6 +46,33 @@ class Compiler_x86_16 : CompilerTargetModule {
 						format(
 							"mov %s, bx", to
 						)
+					];
+				}
+				case '&': {
+					string    varName = part[1 .. $];
+					Variable* var     = GetLocal(varName);
+
+					if (var is null) {
+						ErrorUnknownVariable(
+							line.file, line.line, varName
+						);
+						success = false;
+						return [];
+					}
+
+					return [
+						format(
+							"mov bx, .__var_%s", var.name
+						),
+						format("mov %s, bx", to)
+					];
+				}
+				case '!': {
+					char ch = part[1];
+
+					return [
+						format("mov bx, %d", cast(int) ch),
+						format("mov %s, bx", to)
 					];
 				}
 				default: {

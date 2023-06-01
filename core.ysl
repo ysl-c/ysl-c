@@ -63,7 +63,9 @@ func div n1 n2
 	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
+	asm xor dx, dx
 	asm div bx
+	asm ret
 endf
 
 func mod n1 n2
@@ -76,6 +78,7 @@ func mod n1 n2
 	addr n1
 	asm mov si, ax
 	asm mov ax, [si]
+	asm xor dx, dx
 	asm div bx
 	asm mov ax, dx
 endf
@@ -134,5 +137,54 @@ func greater n1 n2
 	asm ret
 	asm .greater:
 	asm mov ax, 1
+	asm ret
+endf
+
+func peek8 address
+	param address
+
+	addr address
+	asm mov si, ax
+	asm mov di, [si]
+	asm mov al, [di]
+	asm ret
+endf
+
+func poke8 address value
+	param address
+	param value
+
+	addr address
+	asm mov si, ax
+	asm mov di, [si]
+	addr value
+	asm mov si, ax
+	asm mov al, [si]
+	asm mov [di], al
+	asm ret
+endf
+
+func peek16 address
+	param address
+
+	addr address
+	asm mov si, ax
+	asm mov di, [si]
+	asm mov si, [di]
+	asm mov ax, si
+	asm ret
+endf
+
+func poke16 address value
+	param address
+	param value
+
+	addr address
+	asm mov si, ax
+	asm mov di, [si]
+	addr value
+	asm mov si, ax
+	asm mov bx, [si]
+	asm mov [di], bx
 	asm ret
 endf
