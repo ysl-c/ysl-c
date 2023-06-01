@@ -45,3 +45,8 @@ void ErrorUnknownType(string fname, size_t line, string name) {
 	ErrorBegin(fname, line);
 	stderr.writefln("Unknown type: '%s'", name);
 }
+
+void ErrorEmptyIf(string fname, size_t line) {
+	ErrorBegin(fname, line);
+	stderr.writeln("Empty if statement");
+}

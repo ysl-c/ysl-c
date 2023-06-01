@@ -79,3 +79,22 @@ func mod n1 n2
 	asm div bx
 	asm mov ax, dx
 endf
+
+func equals n1 n2
+	param n1
+	param n2
+
+	addr n1
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n2
+	asm mov si, ax
+	asm mov ax, [si]
+	asm cmp ax, bx
+	asm je .equals
+	asm mov ax, 0
+	asm ret
+	asm .equals:
+	asm mov ax, 1
+	asm ret
+endf

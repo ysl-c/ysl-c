@@ -1,23 +1,25 @@
 %include "std.ysl"
 
-int test
-
-func incrementTest
-	import test
-	add $test 1
-	to test
-	export test
-endf
-
 func main
-	import test
-	set test 65
-	export test
-	incrementTest
-	incrementTest
-	incrementTest
-	incrementTest
-	# E
-	import test
-	putch $test
+	local int a
+	local int b
+	local int c
+	set a 5
+	set b 5
+	set c 7
+
+	if equals $a $b
+		putch 65
+		if equals $a $b
+			putch 66
+		endif
+	endif
+
+	if equals $a $c
+		putch 67
+
+		if equals $a $b
+			putch 68
+		endif
+	endif 
 endf

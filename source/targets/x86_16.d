@@ -10,9 +10,49 @@ import yslc.error;
 import yslc.split;
 
 class Compiler_x86_16 : CompilerTargetModule {
-	string lastFunction;
-	string org;
-	bool   comments = true;
+	string  lastFunction;
+	string  org;
+	bool    comments = true;
+	ulong   statements;
+	ulong[] statementIDs;
+
+	string[] CompileParameter(CodeLine line, string part, string to) {
+		if (part.isNumeric()) {
+			return [
+				format(
+					"mov %s, %d", to, parse!int(part)
+				)
+			];
+		}
+		else {
+			switch (part[0]) {
+				case '$': {
+					string   varName = part[1 .. $];
+					Variable* var = GetLocal(varName);
+					
+					if (var is null) {
+						ErrorUnknownVariable(
+							line.file, line.line, varName
+						);
+						success = false;
+						return [];
+					}
+
+					return [
+						format(
+							"mov bx, [.__var_%s]", var.name
+						),
+						format(
+							"mov %s, bx", to
+						)
+					];
+				}
+				default: {
+					assert(0);
+				}
+			}
+		}
+	}
 
 	string[] CompileFunctionCall(CodeLine line, string[] parts) {
 		string[] ret;
@@ -41,43 +81,10 @@ class Compiler_x86_16 : CompilerTargetModule {
 			string paramName = format(
 				"__function_%s.__param_%s", func.name, param
 			);
-		
-			if (parts[i].isNumeric()) {
-				ret ~= [
-					format(
-						"mov word [%s], %d", paramName, parse!int(parts[i])
-					)
-				];
-			}
-			else {
-				switch (parts[i][0]) {
-					case '$': {
-						string   varName = parts[i][1 .. $];
-						Variable* var = GetLocal(varName);
-						
-						if (var is null) {
-							ErrorUnknownVariable(
-								line.file, line.line, varName
-							);
-							success = false;
-							return ret;
-						}
 
-						ret ~= [
-							format(
-								"mov bx, [.__var_%s]", var.name
-							),
-							format(
-								"mov word [%s], bx", paramName
-							)
-						];
-						break;
-					}
-					default: {
-						assert(0);
-					}
-				}
-			}
+			ret ~= CompileParameter(
+				line, parts[i], format("word [%s]", paramName)
+			);
 		}
 
 		ret ~= format("call __function_%s", parts[0]);
@@ -145,6 +152,38 @@ class Compiler_x86_16 : CompilerTargetModule {
 		return ret;
 	}
 
+	string[] CompileIf(CodeLine line, string[] parts) {
+		string[] ret;
+
+		if (parts.empty()) {
+			ErrorEmptyIf(line.file, line.line);
+			success = false;
+			return [];
+		}
+		
+		ret ~= CompileFunctionCall(line, parts);
+		ret ~= [
+			"cmp ax, 0",
+			format("je .__statement_%d_end", statements)
+		];
+
+		statementIDs ~= statements;
+		++ statements;
+
+		return ret;
+	}
+
+	string[] CompileEndIf(CodeLine line) {
+		string[] ret;
+
+		ret ~= [
+			format(".__statement_%d_end:", statementIDs[$ - 1])
+		];
+
+		statementIDs = statementIDs[0 .. $ - 1];
+		return ret;
+	}
+
 	string[] CompileReturn() {
 		return [
 			"ret"
@@ -160,10 +199,15 @@ class Compiler_x86_16 : CompilerTargetModule {
 			return [];
 		}
 
-		return [
-			format("mov bx, %d", parse!int(parts[1])),
+		string[] ret;
+
+		ret ~= CompileParameter(line, parts[1], "bx");
+
+		ret ~= [
 			format("mov [.__var_%s], bx", var.name)
 		];
+
+		return ret;
 	}
 
 	string[] CompileTo(CodeLine line, string[] parts) {
@@ -372,6 +416,14 @@ class Compiler_x86_16 : CompilerTargetModule {
 				}
 				case "endf": {
 					ret ~= CompileFunctionEnd(line);
+					break;
+				}
+				case "if": {
+					ret ~= CompileIf(line, parts[1 .. $]);
+					break;
+				}
+				case "endif": {
+					ret ~= CompileEndIf(line);
 					break;
 				}
 				case "return": {
