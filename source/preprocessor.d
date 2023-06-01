@@ -2,13 +2,17 @@ module yslc.preprocessor;
 
 import std.uni;
 import std.file;
+import std.path;
 import std.array;
+import std.algorithm;
 import core.stdc.stdlib;
 import yslc.compiler;
 import yslc.error;
 import yslc.split;
 
-CodeLine[] RunPreprocessor(string file) {
+CodeLine[] RunPreprocessor(
+	string file, string[] includePaths, ref string[] included
+) {
 	CodeLine[] ret;
 	string[]   code    = readText(file).replace("\r\n", "\n").split("\n");
 	bool       success = true;
@@ -23,20 +27,53 @@ CodeLine[] RunPreprocessor(string file) {
 
 			switch (parts[0]) {
 				case "%include": {
-					if (!exists(parts[1])) {
-						ErrorNoSuchFile(file, i, parts[1]);
+					string localPath = dirName(file) ~ "/" ~ parts[1];
+
+					if (included.canFind(localPath)) {
+						break;
+					}
+					
+					if (!exists(localPath)) {
+						bool exist = false;
+
+						foreach (ref path ; includePaths) {
+							localPath = path ~ "/" ~ parts[1];
+							
+							if (exists(localPath)) {
+								exist = true;
+
+								if (included.canFind(localPath)) {
+									break;
+								}
+
+								included ~= localPath;
+								
+								ret ~= RunPreprocessor(
+									localPath, includePaths, included
+								);
+								
+								break;
+							}
+						}
+
+						if (exist) {
+							break;
+						}
+						
+						ErrorNoSuchFile(file, i, localPath);
 						success = false;
 						break;
-					} // here
+					}
 
-					ret ~= RunPreprocessor(parts[1]);
+					included ~= localPath;
+					ret      ~= RunPreprocessor(localPath, includePaths, included);
 					break;
 				}
 				default: {
 					ErrorUnknownDirective(file, i, parts[0]);
 					success = false;
 					break;
-				} // and here
+				}
 			}
 		}
 		else if (line[0] == '#') {
@@ -57,4 +94,4 @@ CodeLine[] RunPreprocessor(string file) {
 	}
 
 	return ret;
-} // and here
+}

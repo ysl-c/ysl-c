@@ -19,15 +19,18 @@ void main(string[] args) {
 		writefln("Usage:");
 		writefln("    %s [in] [options]", args[0]);
 		writefln("Options:");
-		writefln("    -h / --help : Show this info");
-		writefln("    -o / --out  : Choose output file");
-		writefln("    --org       : Sets org address in asm file");
+		writefln("    -h / --help    : Show this info");
+		writefln("    -o / --out     : Choose output file");
+		writefln("    --org          : Sets org address in asm file");
+		writefln("    -i / --include : Add include directory");
 		return;
 	}
 
 	auto x86Target     = new Compiler_x86_16();
 	x86Target.org      = "0x100";
 	x86Target.comments = false;
+
+	string[] includePaths;
 
 	for (size_t i = 1; i < args.length; ++ i) {
 		if (args[i][0] == '-') {
@@ -44,6 +47,12 @@ void main(string[] args) {
 					x86Target.org = args[i];
 					break;
 				}
+				case "-i":
+				case "--include": {
+					++ i;
+					includePaths ~= args[i];
+					break;
+				}
 				default: {
 					stderr.writefln("Unknown argument %s", args[i]);
 					exit(1);
@@ -56,7 +65,7 @@ void main(string[] args) {
 	}
 
 	target = x86Target;
-	auto res = compiler.Compile(target, inFile);
+	auto res = compiler.Compile(target, inFile, includePaths);
 
 	if (!target.success) {
 		writeln("Compilation failed");

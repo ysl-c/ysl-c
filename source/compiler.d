@@ -78,8 +78,11 @@ class CompilerTargetModule {
 }
 
 class Compiler {
-	string[] Compile(CompilerTargetModule target, string file) {
-		auto code = RunPreprocessor(file);
+	string[] Compile(
+		CompilerTargetModule target, string file, string[] includePaths
+	) {
+		string[] included;
+		auto     code = RunPreprocessor(file, includePaths, included);
 
 		auto ret = target.Compile(code);
 

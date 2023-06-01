@@ -1,1 +1,7 @@
 %include "core.ysl"
+
+func puthex byte
+	param byte
+
+	
+endf

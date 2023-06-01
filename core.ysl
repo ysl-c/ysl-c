@@ -26,3 +26,56 @@ func add n1 n2
 	asm mov ax, [si]
 	asm add ax, bx
 endf
+
+func sub n1 n2
+	param n1
+	param n2
+
+	addr n1
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n2
+	asm mov si, ax
+	asm mov ax, [si]
+	asm sub ax, bx
+endf
+
+func mul n1 n2
+	param n1
+	param n2
+
+	addr n1
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n2
+	asm mov si, ax
+	asm mov ax, [si]
+	asm mul bx
+endf
+
+func div n1 n2
+	param n1
+	param n2
+
+	addr n1
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n2
+	asm mov si, ax
+	asm mov ax, [si]
+	asm div bx
+endf
+
+func mod n1 n2
+	param n1
+	param n2
+
+	addr n1
+	asm mov si, ax
+	asm mov bx, [si]
+	addr n2
+	asm mov si, ax
+	asm mov ax, [si]
+	asm div bx
+	asm mov ax, dx
+endf
