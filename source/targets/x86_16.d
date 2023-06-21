@@ -231,7 +231,25 @@ class Compiler_x86_16 : CompilerTargetModule {
 	}
 
 	string[] CompileWhile(CodeLine line, string[] parts) {
-		return CompileIf(line, parts);
+		string[] ret;
+
+		if (parts.empty()) {
+			ErrorEmptyStatement(line.file, line.line);
+			success = false;
+			return [];
+		}
+
+		ret ~= format(".__statement_%d:", statements);
+		ret ~= CompileFunctionCall(line, parts);
+		ret ~= [
+			"cmp ax, 0",
+			format("je .__statement_%d_end", statements)
+		];
+
+		statementIDs ~= statements;
+		++ statements;
+
+		return ret;
 	}
 
 	string[] CompileEndWhile(CodeLine line) {
@@ -422,6 +440,31 @@ class Compiler_x86_16 : CompilerTargetModule {
 		];
 	}
 
+	string[] CompileFaddr(CodeLine line, string[] parts) {
+		if (parts.length != 1) {
+			ErrorWrongParameterNum(
+				line.file, line.line, 1, parts.length
+			);
+			success = false;
+			return [];
+		}
+
+		Function func;
+
+		try {
+			func = GetFunction(parts[0]);
+		}
+		catch (CompilerException) {
+			ErrorUnknownFunction(line.file, line.line, parts[0]);
+			success = false;
+			return [];
+		}
+
+		return [
+			format("mov ax, __function_%s", func.name)
+		];
+	}
+
 	Variable CreateInt(CodeLine line, string[] parts) {
 		Variable var;
 		
@@ -609,6 +652,10 @@ class Compiler_x86_16 : CompilerTargetModule {
 				}
 				case "export": {
 					ret ~= CompileExport(line, parts[1 .. $]);
+					break;
+				}
+				case "faddr": {
+					ret ~= CompileFaddr(line, parts[1 .. $]);
 					break;
 				}
 				default: {

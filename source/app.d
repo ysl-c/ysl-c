@@ -28,7 +28,7 @@ void main(string[] args) {
 
 	auto x86Target     = new Compiler_x86_16();
 	x86Target.org      = "0x100";
-	x86Target.comments = false;
+	x86Target.comments = true;
 
 	string[] includePaths;
 
