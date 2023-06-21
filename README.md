@@ -1,5 +1,5 @@
 # YSL-C
-unfinished & broken
+compiled programming language
 
 ## build
 ```

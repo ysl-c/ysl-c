@@ -1,12 +1,22 @@
 %include "std.ysl"
 
-func testReturn
-	return 65
-endf
-
 func main
-	local int test
-	testReturn
-	to test
-	putch $test
+	local string str1 "Foo"
+	local string str2 "Foo"
+	local string str3 "Bar"
+
+	local string equal "Equal\r\n"
+	local string notEqual "Not equal\r\n"
+
+	if strcmp &str1 &str2
+		putstr &equal
+	else
+		putstr &notEqual
+	endif
+
+	if strcmp &str1 &str3
+		putstr &equal
+	else
+		putstr &notEqual
+	endif
 endf
