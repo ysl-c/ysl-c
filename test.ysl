@@ -1,22 +1,8 @@
 %include "std.ysl"
 
 func main
-	local string str1 "Foo"
-	local string str2 "Foo"
-	local string str3 "Bar"
+	local array 64 input
 
-	local string equal "Equal\r\n"
-	local string notEqual "Not equal\r\n"
-
-	if strcmp &str1 &str2
-		putstr &equal
-	else
-		putstr &notEqual
-	endif
-
-	if strcmp &str1 &str3
-		putstr &equal
-	else
-		putstr &notEqual
-	endif
+	readstr &input
+	putstr &input
 endf

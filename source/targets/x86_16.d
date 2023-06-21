@@ -271,25 +271,11 @@ class Compiler_x86_16 : CompilerTargetModule {
 			return [];
 		}
 
-		if (!parts[0].isNumeric()) {
-			ErrorExpectedInteger(line.file, line.line);
-			success = false;
-			return [];
-		}
-
-		int times = parse!int(parts[0]);
-
-		if (times == 0) {
-			ErrorForWontRun(line.file, line.line);
-			success = false;
-			return [];
-		}
-
 		statementIDs ~= statements;
 		++ statements;
 
-		return [
-			format("mov cx, %d", times),
+		return CompileParameter(line, parts[0], "cx") ~
+		[
 			format(".__statement_%d:", statementIDs[$ - 1])
 		];
 	}
