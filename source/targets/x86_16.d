@@ -305,10 +305,18 @@ class Compiler_x86_16 : CompilerTargetModule {
 		return ret;
 	}
 
-	string[] CompileReturn() {
-		return [
-			"ret"
-		];
+	string[] CompileReturn(CodeLine line, string[] parts) {
+		if (parts.length > 0) {
+			return CompileParameter(line, parts[0], "ax") ~
+			[
+				"ret"
+			];
+		}
+		else {
+			return [
+				"ret"
+			];
+		}
 	}
 
 	string[] CompileSet(CodeLine line, string[] parts) {
@@ -593,7 +601,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 					break;
 				}
 				case "return": {
-					ret ~= CompileReturn();
+					ret ~= CompileReturn(line, parts[1 .. $]);
 					break;
 				}
 				case "int": {

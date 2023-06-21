@@ -16,3 +16,5 @@ yslc-test-*
 *.lst
 test.asm
 test.com
+std.ysl
+core.ysl

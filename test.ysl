@@ -1,86 +1,12 @@
-func add n1 n2
-	param n1
-	param n2
+%include "std.ysl"
 
-	addr n2
-	asm mov si, ax
-	asm mov bx, [si]
-	addr n1
-	asm mov si, ax
-	asm mov ax, [si]
-	asm add ax, bx
+func testReturn
+	return 65
 endf
-
-func greater n1 n2
-	param n1
-	param n2
-
-	addr n2
-	asm mov si, ax
-	asm mov bx, [si]
-	addr n1
-	asm mov si, ax
-	asm mov ax, [si]
-	asm cmp ax, bx
-	asm jg .greater
-	asm mov ax, 0
-	asm ret
-	asm .greater:
-	asm mov ax, 1
-	asm ret
-endf
-
-func peek8 address
-	param address
-
-	addr address
-	asm mov si, ax
-	asm mov di, [si]
-	asm mov al, [di]
-	asm xor ah, ah
-	asm ret
-endf
-
-func get_char str index
-	param str
-	param index
-
-	add $str $index
-	to str
-	peek8 $str
-endf
-
-func putch ch
-	param ch
-
-	addr ch
-	asm mov si, ax
-	asm mov bx, [si]
-	asm mov ah, 0x0E
-	asm mov al, bl
-	asm int 0x10
-endf
-
-func putstr str
-	param str
-
-	local int index
-	local int ch
-	set index 0
-	get_char &str $index
-	to ch
-
-	while greater $ch 0
-		putch $ch
-		add $index 1
-		to index
-		get_char &str $index
-		to ch
-	endwhile
-endf
-
 
 func main
-    local string msg "Hello world"
-    putstr &msg
+	local int test
+	testReturn
+	to test
+	putch $test
 endf
