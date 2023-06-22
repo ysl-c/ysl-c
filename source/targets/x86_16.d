@@ -217,12 +217,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	string[] CompileEndIf(CodeLine line) {
 		string[] ret;
-
-		if (!ifHadElse) {
-			ret ~= [
-				format(".__statement_%d_else:", statementIDs[$ - 1])
-			];
-		}
+		
 
 		ret ~= [
 			format(".__statement_%d_end:", statementIDs[$ - 1])
@@ -268,8 +263,8 @@ class Compiler_x86_16 : CompilerTargetModule {
 	}
 
 	string[] CompileFor(CodeLine line, string[] parts) {
-		if (parts.empty()) {
-			ErrorEmptyStatement(line.file, line.line);
+		if (parts.length != 2) {
+			ErrorWrongParameterNum(line.file, line.line, 2, parts.length);
 			success = false;
 			return [];
 		}
