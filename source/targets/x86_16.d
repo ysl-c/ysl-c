@@ -227,6 +227,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 		];
 
 		statementIDs = statementIDs[0 .. $ - 1];
+		ifHadElse    = false;
 		return ret;
 	}
 

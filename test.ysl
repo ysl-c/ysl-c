@@ -1,5 +1,9 @@
 %include "std.ysl"
 
 func main
-	putch 65
+	if equals 4 4
+
+	else
+
+	endif
 endf

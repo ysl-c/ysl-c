@@ -20,14 +20,18 @@ void Optimise(ref string[] assembly) {
 	for (size_t i = 0; i < assembly.length; ++ i) {
 		auto instruction = GetInstruction(assembly, i);
 
-		// tail call optimisation
 		if ((instruction == "ret") && (i > 0)) {
 			auto lastInstruction = GetInstruction(assembly, i - 1);
 
 			if (lastInstruction == "call") {
+				// tail call optimisation
 				assembly[i] = ";" ~ assembly[i];
 
 				assembly[i - 1] = ReplaceInstruction(assembly[i - 1], "jmp");
+			}
+			else if (lastInstruction == "ret") {
+				// double ret
+				assembly[i] = ";" ~ assembly[i];
 			}
 		}
 	}
