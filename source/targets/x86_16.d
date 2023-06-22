@@ -76,7 +76,9 @@ class Compiler_x86_16 : CompilerTargetModule {
 					];
 				}
 				default: {
-					assert(0);
+					ErrorUnknownOperator(line.file, line.line, part[0]);
+					success = false;
+					return [];
 				}
 			}
 		}

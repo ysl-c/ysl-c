@@ -60,3 +60,8 @@ void ErrorForWontRun(string fname, size_t line) {
 	ErrorBegin(fname, line);
 	stderr.writefln("This for loop won't run");
 }
+
+void ErrorUnknownOperator(string fname, size_t line, char operator) {
+	ErrorBegin(fname, line);
+	stderr.writefln("Unknown operator '%c'", operator);
+}
