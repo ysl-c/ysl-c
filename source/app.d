@@ -6,6 +6,7 @@ import std.stdio;
 import std.algorithm;
 import core.stdc.stdlib;
 import yslc.compiler;
+import yslc.optimiser;
 import yslc.targets.x86_16;
 
 void main(string[] args) {
@@ -28,7 +29,7 @@ void main(string[] args) {
 
 	auto x86Target     = new Compiler_x86_16();
 	x86Target.org      = "0x100";
-	x86Target.comments = true;
+	x86Target.comments = false;
 
 	string[] includePaths;
 
@@ -71,6 +72,8 @@ void main(string[] args) {
 		writeln("Compilation failed");
 		return;
 	}
+
+	Optimise(res);
 
 	string assembly;
 

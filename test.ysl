@@ -1,8 +1,5 @@
 %include "std.ysl"
 
 func main
-	local array 64 input
-
-	readstr &input
-	putstr &input
+	putch 65
 endf
