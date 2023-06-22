@@ -65,3 +65,8 @@ void ErrorUnknownOperator(string fname, size_t line, char operator) {
 	ErrorBegin(fname, line);
 	stderr.writefln("Unknown operator '%c'", operator);
 }
+
+void ErrorAlreadyElse(string fname, size_t line) {
+	ErrorBegin(fname, line);
+	stderr.writeln("An else was already made in this statement");
+}

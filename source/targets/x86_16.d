@@ -10,12 +10,13 @@ import yslc.error;
 import yslc.split;
 
 class Compiler_x86_16 : CompilerTargetModule {
-	string  lastFunction;
-	string  org;
-	bool    comments = true;
-	ulong   statements;
-	ulong[] statementIDs;
-	bool    ifHadElse = false;
+	string   lastFunction;
+	string   org;
+	bool     comments = true;
+	ulong    statements;
+	ulong[]  statementIDs;
+	string[] forVariables;
+	bool     ifHadElse = false;
 
 	string[] CompileParameter(CodeLine line, string part, string to) {
 		if (part.isNumeric()) {
@@ -207,6 +208,12 @@ class Compiler_x86_16 : CompilerTargetModule {
 	}
 
 	string[] CompileElse(CodeLine line) {
+		if (ifHadElse) {
+			ErrorAlreadyElse(line.file, line.line);
+			success = false;
+			return [];
+		}
+	
 		ifHadElse = true;
 		
 		return [
@@ -217,7 +224,12 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	string[] CompileEndIf(CodeLine line) {
 		string[] ret;
-		
+
+		if (!ifHadElse) {
+			ret ~= [
+				format(".__statement_%d_else:", statementIDs[$ - 1])
+			];
+		}
 
 		ret ~= [
 			format(".__statement_%d_end:", statementIDs[$ - 1])
@@ -271,6 +283,18 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 		statementIDs ~= statements;
 		++ statements;
+
+		forVariables ~= parts[0];
+
+		Variable* var = GetLocal(parts[0]);
+
+		if (var is null) {
+			ErrorUnknownVariable(
+				line.file, line.line, parts[0]
+			);
+			success = false;
+			return [];
+		}
 
 		return CompileParameter(line, parts[0], "cx") ~
 		[
