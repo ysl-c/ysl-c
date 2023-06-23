@@ -8,7 +8,7 @@ void WarningBegin(string fname, size_t line) {
 		stderr.writef("%s:%d: warning: ", fname, line + 1);
 	}
 	else {
-		stderr.writef("\x1b[1m%s:%d: \x1b[36merror:\x1b[0m ", fname, line + 1);
+		stderr.writef("\x1b[1m%s:%d: \x1b[36mwarning:\x1b[0m ", fname, line + 1);
 	}
 }
 
