@@ -73,7 +73,7 @@ void main(string[] args) {
 		return;
 	}
 
-	//Optimise(res);
+	Optimise(res);
 
 	string assembly;
 

@@ -296,19 +296,22 @@ class Compiler_x86_16 : CompilerTargetModule {
 			return [];
 		}
 
-		return CompileParameter(line, parts[0], "cx") ~
+		return CompileParameter(line, parts[1], "ax") ~
 		[
+			format("mov [.__var_%s], ax", parts[0]),
 			format(".__statement_%d:", statementIDs[$ - 1])
 		];
 	}
 
 	string[] CompileEndFor(CodeLine line) {
+		auto var = forVariables[$ - 1];
+	
 		string[] ret = [
-			"dec cx",
-			"cmp cx, 0",
-			format("jne .__statement_%d", statementIDs[$ - 1])
+			format("dec word [.__var_%s]", var),
+			format("jnz .__statement_%d", statementIDs[$ - 1])
 		];
 
+		forVariables = forVariables[0 .. $ - 1];
 		statementIDs = statementIDs[0 .. $ - 1];
 		return ret;
 	}
