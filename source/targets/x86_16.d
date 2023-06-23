@@ -8,6 +8,7 @@ import core.stdc.stdlib;
 import yslc.compiler;
 import yslc.error;
 import yslc.split;
+import yslc.warning;
 
 class Compiler_x86_16 : CompilerTargetModule {
 	string   lastFunction;
@@ -579,7 +580,12 @@ class Compiler_x86_16 : CompilerTargetModule {
 					ret ~= CompileFunctionStart(line, parts[1 .. $]);
 					break;
 				}
-				case "endf": {
+				case "endf":
+				case "endfunc": {
+					if (parts[0] == "endf") {
+						WarningDeprecatedKeyword(line.file, line.line, "endf");
+					}
+				
 					ret ~= CompileFunctionEnd(line);
 					break;
 				}
