@@ -252,6 +252,12 @@ class Compiler_x86_16 : CompilerTargetModule {
 	string[] CompileEndIf(CodeLine line) {
 		string[] ret;
 
+		if (statementIDs.length == 0) {
+			ErrorNoIfToMatch(line.file, line.line);
+			success = false;
+			return [];
+		}
+
 		if (!ifHadElse) {
 			ret ~= [
 				format(".__statement_%d_else:", statementIDs[$ - 1])

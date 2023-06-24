@@ -70,3 +70,8 @@ void ErrorAlreadyElse(string fname, size_t line) {
 	ErrorBegin(fname, line);
 	stderr.writeln("An else was already made in this statement");
 }
+
+void ErrorNoIfToMatch(string fname, size_t line) {
+	ErrorBegin(fname, line);
+	stderr.writeln("No if to match this endif");
+}
