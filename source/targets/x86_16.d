@@ -359,7 +359,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 		}
 		else {
 			ret = [
-				format("dec word [.__var_%s]", var),
+				format("dec word [.__var_%s]", var.name),
 				format("jnz .__statement_%d", statementIDs[$ - 1])
 			];
 		}
