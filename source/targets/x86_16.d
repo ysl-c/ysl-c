@@ -27,6 +27,25 @@ class Compiler_x86_16 : CompilerTargetModule {
 				)
 			];
 		}
+		else if (part.startsWith("0x")) {
+			int  value;
+			auto hex = part[2 .. $];
+
+			try {
+				value = parse!int(hex, 16);
+			}
+			catch (ConvException e) {
+				ErrorInvalidHex(line.file, line.line);
+				success = false;
+				return [];
+			}
+
+			return [
+				format(
+					"mov %s, %d", to, value
+				)
+			];
+		}
 		else {
 			switch (part[0]) {
 				case '$': {
@@ -37,9 +56,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 						var = GetGlobal(varName);
 
 						if (var is null) {
-							ErrorUnknownVariable(
-								line.file, line.line, varName
-							);
+							ErrorUnknownVariable(line.file, line.line, varName);
 							success = false;
 							return [];
 						}

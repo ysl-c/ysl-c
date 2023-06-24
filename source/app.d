@@ -9,7 +9,7 @@ import yslc.compiler;
 import yslc.optimiser;
 import yslc.targets.x86_16;
 
-void main(string[] args) {
+int main(string[] args) {
 	CompilerTargetModule target;
 	Compiler             compiler = new Compiler();
 
@@ -24,7 +24,7 @@ void main(string[] args) {
 		writefln("    -o / --out     : Choose output file");
 		writefln("    --org          : Sets org address in asm file");
 		writefln("    -i / --include : Add include directory");
-		return;
+		return 0;
 	}
 
 	auto x86Target     = new Compiler_x86_16();
@@ -70,7 +70,7 @@ void main(string[] args) {
 
 	if (!target.success) {
 		writeln("Compilation failed");
-		return;
+		return 1;
 	}
 
 	Optimise(res);
@@ -85,4 +85,5 @@ void main(string[] args) {
 	}
 
 	std.file.write(outFile, assembly);
+	return 0;
 }

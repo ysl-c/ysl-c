@@ -1,5 +1,6 @@
+%include "std.ysl"
 int test
 
 func main
-	set test 5
+	putch 0x41
 endfunc

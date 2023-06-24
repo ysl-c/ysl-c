@@ -75,3 +75,8 @@ void ErrorNoIfToMatch(string fname, size_t line) {
 	ErrorBegin(fname, line);
 	stderr.writeln("No if to match this endif");
 }
+
+void ErrorInvalidHex(string fname, size_t line) {
+	ErrorBegin(fname, line);
+	stderr.writeln("Invalid hex");
+}
