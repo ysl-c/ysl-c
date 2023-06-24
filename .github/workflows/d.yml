@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{matrix.os}}
 
     strategy:
       matrix:
@@ -34,5 +34,5 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
-        name: build
-        path: ${{github.workspace}}/build/yslc
+        name: build-${{matrix.os}}
+        path: ${{github.workspace}}/yslc
