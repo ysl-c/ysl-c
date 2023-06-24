@@ -32,7 +32,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 				case '$': {
 					string    varName = part[1 .. $];
 					Variable* var     = GetLocal(varName);
-					
+
 					if (var is null) {
 						ErrorUnknownVariable(
 							line.file, line.line, varName
@@ -78,9 +78,23 @@ class Compiler_x86_16 : CompilerTargetModule {
 					];
 				}
 				default: {
-					ErrorUnknownOperator(line.file, line.line, part[0]);
-					success = false;
-					return [];
+					if (part == "true") {
+						return [
+							"mov bx, 1",
+							format("mov %s, bx", to)
+						];
+					}
+					else if (part == "false") {
+						return [
+							"mov bx, 0",
+							format("mov %s, bx", to)
+						];
+					}
+					else {
+						ErrorUnknownOperator(line.file, line.line, part[0]);
+						success = false;
+						return [];
+					}
 				}
 			}
 		}
@@ -126,7 +140,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	string[] CompileFunctionStart(CodeLine line, string[] parts) {
 		AddFunction(parts[0], parts[1 .. $]);
-	
+
 		return [
 			format("jmp __function_%s_end", parts[0]),
 			format("__function_%s:", parts[0])
@@ -214,9 +228,9 @@ class Compiler_x86_16 : CompilerTargetModule {
 			success = false;
 			return [];
 		}
-	
+
 		ifHadElse = true;
-		
+
 		return [
 			format("jmp .__statement_%d_end", statementIDs[$ - 1]),
 			format(".__statement_%d_else:", statementIDs[$ - 1])
@@ -306,7 +320,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	string[] CompileEndFor(CodeLine line) {
 		auto var = forVariables[$ - 1];
-	
+
 		string[] ret = [
 			format("dec word [.__var_%s]", var),
 			format("jnz .__statement_%d", statementIDs[$ - 1])
@@ -487,7 +501,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	Variable CreateInt(CodeLine line, string[] parts) {
 		Variable var;
-		
+
 		if (parts.length != 1) {
 			ErrorWrongParameterNum(
 				line.file, line.line, 1, parts.length
@@ -495,7 +509,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 			success = false;
 			return var;
 		}
-	
+
 		var.name = parts[0];
 		var.type = VariableType.Integer;
 
@@ -504,7 +518,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	Variable CreateArray(CodeLine line, string[] parts) {
 		Variable var;
-		
+
 		if (parts.length != 2) {
 			ErrorWrongParameterNum(
 				line.file, line.line, 2, parts.length
@@ -512,7 +526,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 			success = false;
 			return var;
 		}
-		
+
 		var.name     = parts[1];
 		var.type     = VariableType.Array;
 		var.elements = parse!ulong(parts[0]);
@@ -522,7 +536,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 	Variable CreateString(CodeLine line, string[] parts) {
 		Variable var;
-	
+
 		if (parts.length != 2) {
 			ErrorWrongParameterNum(
 				line.file, line.line, 2, parts.length
@@ -538,7 +552,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 
 		return var;
 	}
-	
+
 	override string[] Compile(CodeLine[] lines) {
 		string[] ret;
 
@@ -555,7 +569,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 			if (comments) {
 				ret ~= format("; %s", line.contents);
 			}
-		
+
 			auto parts = Split(
 				line.file, line.line, line.contents,
 				&success
@@ -585,7 +599,7 @@ class Compiler_x86_16 : CompilerTargetModule {
 					if (parts[0] == "endf") {
 						WarningDeprecatedKeyword(line.file, line.line, "endf");
 					}
-				
+
 					ret ~= CompileFunctionEnd(line);
 					break;
 				}
