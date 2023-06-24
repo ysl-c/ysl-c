@@ -30,3 +30,9 @@ jobs:
       run: |
         # Build the project, with its main file included, without unittests
         dub build
+        
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: ${{github.workspace}}/build/yslc
