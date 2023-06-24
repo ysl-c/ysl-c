@@ -83,12 +83,14 @@ class Compiler_x86_16 : CompilerTargetModule {
 							format("mov bx, %d", 1),
 							format("mov %s, bx", to)
 						];
-					} else if (part == "false") {
+					}
+					else if (part == "false") {
 						return [
 							format("mov bx, %d", 0),
 							format("mov %s, bx", to)
 						];
-					} else {
+					}
+					else {
 						ErrorUnknownOperator(line.file, line.line, part[0]);
 						success = false;
 						return [];
