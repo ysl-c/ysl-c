@@ -34,20 +34,25 @@ class Compiler_x86_16 : CompilerTargetModule {
 					Variable* var     = GetLocal(varName);
 
 					if (var is null) {
-						ErrorUnknownVariable(
-							line.file, line.line, varName
-						);
-						success = false;
-						return [];
+						var = GetGlobal(varName);
+
+						if (var is null) {
+							ErrorUnknownVariable(
+								line.file, line.line, varName
+							);
+							success = false;
+							return [];
+						}
+
+						return [
+							format("mov bx, [__gvar_%s]", var.name),
+							format("mov %s, bx", to)
+						];
 					}
 
 					return [
-						format(
-							"mov bx, [.__var_%s]", var.name
-						),
-						format(
-							"mov %s, bx", to
-						)
+						format("mov bx, [.__var_%s]", var.name),
+						format("mov %s, bx", to)
 					];
 				}
 				case '&': {
@@ -55,17 +60,24 @@ class Compiler_x86_16 : CompilerTargetModule {
 					Variable* var     = GetLocal(varName);
 
 					if (var is null) {
-						ErrorUnknownVariable(
-							line.file, line.line, varName
-						);
-						success = false;
-						return [];
+						var = GetGlobal(varName);
+
+						if (var is null) {
+							ErrorUnknownVariable(
+								line.file, line.line, varName
+							);
+							success = false;
+							return [];
+						}
+
+						return [
+							format("mov bx, __gvar_%s", var.name),
+							format("mov %s, bx", to)
+						];
 					}
 
 					return [
-						format(
-							"mov bx, .__var_%s", var.name
-						),
+						format("mov bx, .__var_%s", var.name),
 						format("mov %s, bx", to)
 					];
 				}
@@ -304,11 +316,21 @@ class Compiler_x86_16 : CompilerTargetModule {
 		Variable* var = GetLocal(parts[0]);
 
 		if (var is null) {
-			ErrorUnknownVariable(
-				line.file, line.line, parts[0]
-			);
-			success = false;
-			return [];
+			var = GetGlobal(parts[0]);
+
+			if (var is null) {
+				ErrorUnknownVariable(
+					line.file, line.line, parts[0]
+				);
+				success = false;
+				return [];
+			}
+
+			return CompileParameter(line, parts[1], "ax") ~
+			[
+				format("mov [__gvar_%s], ax", parts[0]),
+				format(".__statement_%D", statementIDs[$ - 1])
+			];
 		}
 
 		return CompileParameter(line, parts[1], "ax") ~
@@ -319,12 +341,28 @@ class Compiler_x86_16 : CompilerTargetModule {
 	}
 
 	string[] CompileEndFor(CodeLine line) {
-		auto var = forVariables[$ - 1];
+		auto     varName = forVariables[$ - 1];
+		auto     var     = GetLocal(varName);
+		string[] ret;
 
-		string[] ret = [
-			format("dec word [.__var_%s]", var),
-			format("jnz .__statement_%d", statementIDs[$ - 1])
-		];
+		if (var is null) {
+			var = GetGlobal(varName);
+
+			if (var is null) {
+				assert(0);
+			}
+
+			ret = [
+				format("dec word [__gvar_%s]", var),
+				format("jnz .__statement_%d", statementIDs[$ - 1])
+			];
+		}
+		else {
+			ret = [
+				format("dec word [.__var_%s]", var),
+				format("jnz .__statement_%d", statementIDs[$ - 1])
+			];
+		}
 
 		forVariables = forVariables[0 .. $ - 1];
 		statementIDs = statementIDs[0 .. $ - 1];
@@ -349,9 +387,18 @@ class Compiler_x86_16 : CompilerTargetModule {
 		auto var = GetLocal(parts[0]);
 
 		if (var is null) {
-			ErrorUnknownVariable(line.file, line.line, parts[0]);
-			success = false;
-			return [];
+			var = GetGlobal(parts[0]);
+
+			if (var is null) {
+				ErrorUnknownVariable(line.file, line.line, parts[0]);
+				success = false;
+				return [];
+			}
+
+			return CompileParameter(line, parts[1], "bx") ~
+			[
+				format("mov [__gvar_%s], bx", var.name)
+			];
 		}
 
 		string[] ret;
@@ -369,9 +416,17 @@ class Compiler_x86_16 : CompilerTargetModule {
 		auto var = GetLocal(parts[0]);
 
 		if (var is null) {
-			ErrorUnknownVariable(line.file, line.line, parts[0]);
-			success = false;
-			return [];
+			var = GetGlobal(parts[0]);
+
+			if (var is null) {
+				ErrorUnknownVariable(line.file, line.line, parts[0]);
+				success = false;
+				return [];
+			}
+
+			return [
+				format("mov [__gvar_%s], ax", var.name)
+			];
 		}
 
 		return [
@@ -383,9 +438,17 @@ class Compiler_x86_16 : CompilerTargetModule {
 		auto var = GetLocal(parts[0]);
 
 		if (var is null) {
-			ErrorUnknownVariable(line.file, line.line, parts[0]);
-			success = false;
-			return [];
+			var = GetGlobal(parts[0]);
+
+			if (var is null) {
+				ErrorUnknownVariable(line.file, line.line, parts[0]);
+				success = false;
+				return [];
+			}
+
+			return [
+				format("mov ax, __gvar_%s", var.name)
+			];
 		}
 
 		return [
@@ -686,11 +749,13 @@ class Compiler_x86_16 : CompilerTargetModule {
 					break;
 				}
 				case "import": {
-					ret ~= CompileImport(line, parts[1 .. $]);
+					WarningDeprecatedKeyword(line.file, line.line, "import");
+					//ret ~= CompileImport(line, parts[1 .. $]);
 					break;
 				}
 				case "export": {
-					ret ~= CompileExport(line, parts[1 .. $]);
+					WarningDeprecatedKeyword(line.file, line.line, "export");
+					//ret ~= CompileExport(line, parts[1 .. $]);
 					break;
 				}
 				case "faddr": {

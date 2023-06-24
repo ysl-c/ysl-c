@@ -1,13 +1,5 @@
-%include "std.ysl"
+int test
 
 func main
-	local int i
-	local int j
-	
-	for i 5
-		putch !A
-		for j 2
-			putch !B
-		endfor
-	endfor
-endf
+	set test 5
+endfunc
