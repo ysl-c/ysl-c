@@ -80,13 +80,13 @@ class Compiler_x86_16 : CompilerTargetModule {
 				default: {
 					if (part == "true") {
 						return [
-							format("mov bx, %d", 1),
+							"mov bx, 1",
 							format("mov %s, bx", to)
 						];
 					}
 					else if (part == "false") {
 						return [
-							format("mov bx, %d", 0),
+							"mov bx, 0",
 							format("mov %s, bx", to)
 						];
 					}
